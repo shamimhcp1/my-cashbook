@@ -1,0 +1,91 @@
+
+{% extends "cashbook/base.html" %}
+
+{% block content %}
+
+<div class="container">
+  <div class="d-flex justify-content-between mt-4">
+    <!-- Back button -->
+    <h4><a href="{% url 'cashbook:index' %}" type="button" class="mr-2"> <i class="fa fa-arrow-left"></i> </a> Edit Transaction</h4>
+  
+    <!-- Transaction delete form -->
+    <form id="delete-form" action="{% url 'cashbook:delete_transaction' %}" method="POST">
+      {% csrf_token %}
+      <input type="hidden" name="transaction_id" value="{{ transaction.id }}">
+      <div class="form-group">
+        <input id="delete-button" type="submit" class="btn btn-outline-danger" value="Delete">
+      </div>
+    </form>
+  </div>
+    
+
+    <form id="update-form" action="{% url 'cashbook:edit_transaction' transaction.id %}" method="POST">
+      {% csrf_token %}
+      <div class="form-group">
+        <label for="amount">Amount:</label>
+        <input type="number" class="form-control" name="amount" value="{{ transaction.amount }}" required>
+      </div>
+  
+      <div class="form-group">
+        <label for="account">Account:</label>
+        <select class="form-control" name="account" required>
+          {% for account in accounts %}
+          <option value="{{ account.id }}" {% if account.id == transaction.account_id.id %}selected{% endif %}>{{ account.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+  
+      <div class="form-group">
+        <label for="category">Category:</label>
+        <select class="form-control" name="category" required>
+          {% for category in categories %}
+          <option value="{{ category.id }}" {% if category.id == transaction.category_id.id %}selected{% endif %}>{{ category.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+  
+      <div class="form-group">
+        <label for="trx_type">Transaction Type:</label>
+        <select class="form-control" name="trx_type" required>
+          {% for trx_type in trx_types %}
+          <option value="{{ trx_type.id }}" {% if trx_type.id == transaction.trx_type_id.id %}selected{% endif %}>{{ trx_type.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+  
+      <div class="form-group">
+        <label for="remarks">Remarks:</label>
+        <input type="text" class="form-control" name="remarks" value="{{ transaction.remarks }}" required>
+      </div>
+  
+      <div class="form-group">
+        <label for="create_date">Date:</label>
+        <input type="datetime-local" class="form-control" name="create_date" value="{{ transaction.create_date|date:'Y-m-d\TH:i' }}" required>
+      </div>
+  
+      <div class="form-group">
+        <input type="submit" class="btn btn-primary" value="Update">
+      </div>
+
+    </form>
+    
+  </div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+  // JavaScript/jQuery code
+  $(document).ready(function() {
+
+    // Click event handler for the Delete button
+    $("#delete-button").click(function(e) {
+      e.preventDefault(); // Prevent the default form submission
+
+      if (window.confirm("Are you sure you want to delete this transaction?")) {
+        $("#delete-form").submit();  // Submit the Delete form
+      }
+    });
+  });
+</script>
+  
+{% endblock %}
+
