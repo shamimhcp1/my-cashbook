@@ -6,31 +6,31 @@
 <div class="p-3">
     <div class="row justify-content-md-center">
         <div class="col-4">
-            <select class="form-control" name="date-filter" id="date-filter" required>
-                <option value="all-time" {% if date_filter == '' %}selected{% endif %}>All Time</option>
-                <option value="today" {% if date_filter == 'today' %}selected{% endif %}>Today</option>
-                <option value="yesterday" {% if date_filter == 'yesterday' %}selected{% endif %}>Yesterday</option>
-                <option value="this_month" {% if date_filter == 'this_month' %}selected{% endif %}>This Month</option>
-                <option value="last_month" {% if date_filter == 'last_month' %}selected{% endif %}>Last Month</option>
-                <option value="single_day" {% if date_filter == 'single_day' %}selected{% endif %}>Single Day</option>
-                <option value="date_range" {% if date_filter == 'date_range' %}selected{% endif %}>Date Range</option>
-            </select>
+            <select class="form-control" name="date-filter" required>
+                <option value="">All Time</option>
+                <option value="">Today</option>
+                <option value="">Yesterday</option>
+                <option value="">This Month</option>
+                <option value="">Last Month</option>
+                <option value="">Single Day</option>
+                <option value="">Date Range</option>
+              </select>
         </div>
         <div class="col-4">
-            <select class="form-control" name="trx-type" id="trx-type" required>
-                <option value="" {% if trx_type_filter == '' %}selected{% endif %}>Trx Type</option>
+            <select class="form-control" name="trx_type" required>
+                <option value="">Trx Type</option>
                 {% for type in trx_types %}
-                <option value="{{ type.id }}" {% if trx_type_filter == type.id %}selected{% endif %}>{{ type.name }}</option>
+                <option value="{{ type.id }}">{{ type.name }}</option>
                 {% endfor %}
-            </select>
+              </select>
         </div>
         <div class="col-4">
-            <select class="form-control" name="category" id="category" required>
-                <option value="" {% if category_filter == '' %}selected{% endif %}>Category</option>
-                {% for category in categories %}
-                <option value="{{ category.id }}" {% if category_filter == category.id %}selected{% endif %}>{{ category.name }}</option>
+            <select class="form-control" name="category" required>
+                <option value="">Category</option>
+                {% for category in categories%}
+                <option value="{{ category.id }}">{{ category.name }}</option>
                 {% endfor %}
-            </select>
+              </select>
         </div>
     </div>
 </div>
@@ -97,35 +97,8 @@
             {% endfor %}
         </div>
     {% else %}
-    <div class="card"">
-        <div class="card-body">
-            <ul class="list-group">
-                <span>No Trx are available.</span>
-            </ul>
-        </div>
-    </div>
-        
+        <p>No Trx are available.</p>
     {% endif %}
 
-
-<!-- JavaScript code -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script>
-$(document).ready(function() {
-    // Handle onchange event for filter options
-    $('#date-filter, #trx-type, #category').on('change', function() {
-        // Get selected values
-        var dateFilter = $('#date-filter').val();
-        var trxTypeFilter = $('#trx-type').val();
-        var categoryFilter = $('#category').val();
-
-        // Construct the URL with the selected filters
-        var url = '/cashbook/?date-filter=' + dateFilter + '&trx-type=' + trxTypeFilter + '&category=' + categoryFilter;
-
-        // Send the GET request
-        window.location.href = url;
-    });
-});
-</script>
 
 {% endblock %}
