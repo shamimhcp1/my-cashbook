@@ -1,0 +1,57 @@
+{% extends "cashbook/base.html" %}
+
+{% block content %}
+<div class="card-body">
+    
+    <div class="d-flex justify-content-between mt-4">
+        <!-- Back button -->
+        <h4 ><a href="{% url 'cashbook:index' %}" type="button" class="mr-2"> <i class="fa fa-arrow-left"></i> </a> Manage Category</h4>
+      
+        <a href="" class="btn btn-outline-primary">Add Category</a>
+
+    </div>
+
+<!-- Action Button -->
+    <form class="form-inline mt-3">
+        <label class="my-1 mr-2" for="inlineFormCustomSelectPref">Action: </label>
+        <select class="custom-select my-1 mr-sm-2" id="inlineFormCustomSelectPref">
+          <option selected>Choose...</option>
+          <option value="1">Delete Selected Category</option>
+        </select>
+        <button type="submit" class="btn btn-secondary my-1 mr-2">Go</button>
+        <span>0 of 14 selected</span>
+      
+      </form>
+
+
+      <!-- List Category -->
+    <ul class="list-group mt-2">
+        <li class="list-group-item form-check form-check-inline">
+            <div class="form-check form-check-inline">
+                <input class="form-check-input mr-4" type="checkbox" id="inlineCheckbox1" value="option1">
+                <label class="form-check-label text-uppercase" for="inlineCheckbox1">Category</label>
+            </div>
+        </li>
+        {% for category in categories %}
+        <li class="list-group-item ">
+            <div class="form-check form-check-inline">
+                <input class="form-check-input mr-4" type="checkbox" id="inlineCheckbox1" value="option1">
+                <label class="form-check-label" for="inlineCheckbox1">
+                    <a href="" class="text-decoration-none">{{ category.name }}</a>
+                </label>
+            </div>
+            <a href="" class="text-decoration-none button float-right d-inline">
+                <i class="fa-regular fa-pen-to-square"></i>
+            </a> 
+            <form action="" method="post" class="float-right d-inline pr-4">
+                {% csrf_token %}
+                <a href=""  type="submit" id="button-addon2" class="text-decoration-none">
+                  <i class="fa-solid fa-trash text-danger"></i>
+                </a>
+            </form>
+        </li>
+        {% endfor %}
+      </ul>
+</div>
+{% endblock %}
+

@@ -206,3 +206,9 @@ def contact_view(request):
         )
 
     return render(request, 'cashbook/about.html')
+
+def manage_category(request):
+    context = {
+        'categories'    : Category.objects.order_by("name")
+    }
+    return render(request, 'cashbook/category/manage_category.html', context)
