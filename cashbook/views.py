@@ -4,6 +4,8 @@ from .forms import TransactionForm
 from django.db.models import Q, Sum
 from datetime import date, timedelta
 from cashbook.models import Category, Account, Transaction, TrxType
+from django.core.mail import send_mail
+from django.conf import settings
 
 def index(request):
     
@@ -21,8 +23,7 @@ def index(request):
         if date_filter == 'today':
             trx_all = trx_all.filter(create_date__date=date.today())
         elif date_filter == 'all-time':
-            # This will return trx_all
-            pass
+            trx_all = Transaction.objects.order_by("-create_date")
         elif date_filter == 'yesterday':
             trx_all = trx_all.filter(create_date__date=date.today() - timedelta(days=1))
         elif date_filter == 'this_month':
@@ -36,6 +37,7 @@ def index(request):
             # You'll need to add logic to handle date range filtering
             pass
     else:
+        date_filter = 'this_month'
         trx_all = trx_all.filter(create_date__month=date.today().month)
 
     if trx_type_filter:
@@ -186,3 +188,21 @@ def delete_transaction(request):
         transaction.delete()
     
     return redirect('cashbook:index')
+
+
+def contact_view(request):
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        email = request.POST.get('email')
+        message = request.POST.get('message')
+
+        # Send email using Django's send_mail()
+        send_mail(
+            'Contact Form Submission',
+            f'Name: {name}\nEmail: {email}\n\nMessage:\n{message}',
+            settings.DEFAULT_FROM_EMAIL,
+            [settings.CONTACT_EMAIL],
+            fail_silently=False
+        )
+
+    return render(request, 'cashbook/about.html')

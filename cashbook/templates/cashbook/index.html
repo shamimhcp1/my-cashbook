@@ -1,9 +1,19 @@
 {% extends "cashbook/base.html" %}
 
 {% block content %}
+<!-- Search option -->
+<div class="p-3">
+    <div class="input-group mb-3">
+        <input type="text" class="form-control" placeholder="Search by amount or remarks" aria-label="search" aria-describedby="basic-addon2">
+        <div class="input-group-append">
+          <button class="btn btn-outline-secondary" type="button"><i class="fa fa-search"></i></button>
+        </div>
+      </div>
+</div>
+
 
 <!-- Filter opthions -->
-<div class="p-3">
+<div class="p-3" style="margin-top: -30px">
     <div class="row justify-content-md-center">
         <div class="col-4">
             <select class="form-control" name="date-filter" id="date-filter" required>
