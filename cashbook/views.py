@@ -208,7 +208,10 @@ def contact_view(request):
     return render(request, 'cashbook/about.html')
 
 def manage_category(request):
+    categories = Category.objects.order_by("name")
+    total_categories = categories.count()
     context = {
-        'categories'    : Category.objects.order_by("name")
+        'categories'    : categories,
+        'total_categories' : total_categories
     }
     return render(request, 'cashbook/category/manage_category.html', context)
