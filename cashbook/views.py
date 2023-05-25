@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse
-from .forms import TransactionForm
+from .forms import TransactionForm, CategoryForm
 from django.db.models import Q, Sum
 from datetime import date, timedelta
 from cashbook.models import Category, Account, Transaction, TrxType
@@ -53,7 +53,7 @@ def index(request):
     total_cash_in = trx_all.filter(trx_type_id=type_cash_in).aggregate(Sum('amount'))['amount__sum'] or 0
     total_cash_out = trx_all.filter(trx_type_id=type_cash_out).aggregate(Sum('amount'))['amount__sum'] or 0
 
-    acc_cash = Account.objects.get(name='Cash')
+    acc_cash = Account.objects.get(name='cash')
     net_balance = acc_cash.initial_balance + total_cash_in - total_cash_out
 
     context = {
@@ -75,28 +75,27 @@ def index(request):
 
     return render(request, 'cashbook/index.html', context)
 
+# cash in transaction add
 def cash_in(request):
-    categories    = Category.objects.all()
-    accounts      = Account.objects.all()
+    categories = Category.objects.filter(is_active=True).order_by("name")
+    acc_cash      = Account.objects.get(name='cash')
     type_cash_in  = TrxType.objects.get(name='cash_in')
     transaction   = Transaction()
 
     context = {
-        'categories'    : categories,
-        'accounts'      : accounts
+        'categories'    : categories
     }
 
     if request.method == 'POST':
-        account_id = request.POST['account']
-        account = get_object_or_404(Account, pk=account_id)
-        transaction.account_id = account
+        if request.POST['category'] != 'null':
+            category_id = request.POST['category']
+            category = get_object_or_404(Category, pk=category_id)
+            transaction.category_id = category
+        else:
+            transaction.category_id = None
 
-        category_id = request.POST['category']
-        category = get_object_or_404(Category, pk=category_id)
-        transaction.category_id = category
-        
+        transaction.account_id = acc_cash
         transaction.trx_type_id = type_cash_in
-        
         transaction.amount          = request.POST['amount']
         transaction.remarks         = request.POST['remarks']
         transaction.create_date     = request.POST['create_date']
@@ -106,26 +105,26 @@ def cash_in(request):
     else:
         return render(request, 'cashbook/cash_in.html', context)
 
+# cash out transaction add
 def cash_out(request):
-    categories    = Category.objects.all()
-    accounts      = Account.objects.all()
+    categories = Category.objects.filter(is_active=True).order_by("name")
+    acc_cash      = Account.objects.get(name='cash')
     type_cash_out = TrxType.objects.get(name='cash_out')
     transaction   = Transaction()
 
     context = {
-        'categories'    : categories,
-        'accounts'      : accounts
+        'categories'    : categories
     }
 
     if request.method == 'POST':
-        account_id = request.POST['account']
-        account = get_object_or_404(Account, pk=account_id)
-        transaction.account_id = account
-
-        category_id = request.POST['category']
-        category = get_object_or_404(Category, pk=category_id)
-        transaction.category_id = category
+        if request.POST['category'] != 'null':
+            category_id = request.POST['category']
+            category = get_object_or_404(Category, pk=category_id)
+            transaction.category_id = category
+        else:
+            transaction.category_id = None
         
+        transaction.account_id = acc_cash
         transaction.trx_type_id = type_cash_out
         
         transaction.amount          = request.POST['amount']
@@ -148,13 +147,15 @@ def edit_transaction(request, transaction_id):
         form = TransactionForm(instance=transaction)
 
     if request.method == 'POST':
-        account_id = request.POST['account']
-        account = get_object_or_404(Account, pk=account_id)
-        transaction.account_id = account
+        acc_cash      = Account.objects.get(name='cash')
+        transaction.account_id = acc_cash
 
-        category_id = request.POST['category']
-        category = get_object_or_404(Category, pk=category_id)
-        transaction.category_id = category
+        if request.POST['category'] != 'null':
+            category_id = request.POST['category']
+            category = get_object_or_404(Category, pk=category_id)
+            transaction.category_id = category
+        else:
+            transaction.category_id = None
         
         trx_id = request.POST['trx_type']
         trx_type = get_object_or_404(TrxType, pk=trx_id)
@@ -167,7 +168,8 @@ def edit_transaction(request, transaction_id):
 
         return redirect('cashbook:index')  # Replace with the appropriate URL name for the transaction list
     else:
-        categories    = Category.objects.all()
+
+        categories    = Category.objects.filter(is_active=True).order_by('name')
         accounts      = Account.objects.all()
         trx_types     = TrxType.objects.all()
         context = {
@@ -215,3 +217,42 @@ def manage_category(request):
         'total_categories' : total_categories
     }
     return render(request, 'cashbook/category/manage_category.html', context)
+
+def add_category(request):
+
+    category = Category()
+    if request.method == 'POST':
+        is_active = request.POST.get('is_active', False)
+        if not is_active:
+            category.is_active = is_active
+        category.name = request.POST['name']
+        category.save()
+        return redirect('cashbook:manage_category')
+    else:
+        return render(request, 'cashbook/category/add_category.html')
+
+def edit_category(request, category_id):
+
+    category = get_object_or_404(Category, pk=category_id)
+    if request.method == 'POST':
+        is_active = request.POST.get('is_active', False)
+        if is_active:
+            category.is_active = True
+        else:
+            category.is_active = is_active
+        category.name = request.POST['name']
+        category.save()
+        return redirect('cashbook:manage_category')
+    else:
+        form = CategoryForm(instance=category)
+        return render(request, 'cashbook/category/edit_category.html', context= {
+            'category' : category,
+            'form'  : form
+        })
+
+def delete_category(request):
+    # return HttpResponse(request.POST['category_id'])
+    if request.method == 'POST':
+        category = get_object_or_404(Category, pk=request.POST['category_id'])
+        category.delete()
+    return redirect('cashbook:manage_category')

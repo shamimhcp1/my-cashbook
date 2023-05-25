@@ -1,0 +1,29 @@
+{% extends "cashbook/base.html" %}
+
+{% block content %}
+<div class="card-body">
+    
+    <div class="d-flex justify-content-between mt-4">
+        <!-- Back button -->
+        <h4 ><a href="{% url 'cashbook:manage_category' %}" type="button" class="mr-2"> <i class="fa fa-arrow-left"></i> </a> Add Category</h4>
+      
+    </div>
+
+    <form action="{% url 'cashbook:add_category' %}" class="mt-3" method="POST">
+        {% csrf_token %}
+        <div class="form-group">
+          <input type="text" class="form-control" id="name" name="name" placeholder="Enter category name" autofocus required>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="is_active" id="is_active" checked>
+          <label class="form-check-label" for="is_active">
+              Active
+          </label>
+        </div>
+        <button type="submit" class="btn btn-primary mt-3">Submit</button>
+      </form>
+
+
+</div>
+{% endblock %}
+

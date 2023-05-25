@@ -37,6 +37,7 @@
         <div class="col-4">
             <select class="form-control" name="category" id="category" required>
                 <option value="" {% if category_filter == '' %}selected{% endif %}>Category</option>
+                <option value="">No Category</option>
                 {% for category in categories %}
                 <option value="{{ category.id }}" {% if category_filter == category.id %}selected{% endif %}>{{ category.name }}</option>
                 {% endfor %}
