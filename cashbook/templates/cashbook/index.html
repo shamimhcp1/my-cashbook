@@ -11,35 +11,35 @@
       </div>
 </div>
 
-
-<!-- Filter opthions -->
+<!-- Filter options -->
 <div class="p-3" style="margin-top: -30px">
     <div class="row justify-content-md-center">
         <div class="col-4">
-            <select class="form-control" name="date-filter" id="date-filter" required>
-                <option value="all-time" {% if date_filter == '' %}selected{% endif %}>All Time</option>
-                <option value="today" {% if date_filter == 'today' %}selected{% endif %}>Today</option>
-                <option value="yesterday" {% if date_filter == 'yesterday' %}selected{% endif %}>Yesterday</option>
-                <option value="this_month" {% if date_filter == 'this_month' %}selected{% endif %}>This Month</option>
-                <option value="last_month" {% if date_filter == 'last_month' %}selected{% endif %}>Last Month</option>
-                <option value="single_day" {% if date_filter == 'single_day' %}selected{% endif %}>Single Day</option>
-                <option value="date_range" {% if date_filter == 'date_range' %}selected{% endif %}>Date Range</option>
+            <select class="form-control" name="date-filter" id="date-filter">
+                <option value="">Select Date</option>
+                <option value="all-time">All Time</option>
+                <option value="today">Today</option>
+                <option value="yesterday">Yesterday</option>
+                <option value="this_month">This Month</option>
+                <option value="last_month">Last Month</option>
+                <option value="single_day">Single Day</option>
+                <option value="date_range">Date Range</option>
             </select>
         </div>
         <div class="col-4">
-            <select class="form-control" name="trx-type" id="trx-type" required>
-                <option value="" {% if trx_type_filter == '' %}selected{% endif %}>Trx Type</option>
+            <select class="form-control" name="trx-type" id="trx-type">
+                <option value="">Select Trx Type</option>
                 {% for type in trx_types %}
-                <option value="{{ type.id }}" {% if trx_type_filter == type.id %}selected{% endif %}>{{ type.name }}</option>
+                <option value="{{ type.id }}">{{ type.name }}</option>
                 {% endfor %}
             </select>
         </div>
         <div class="col-4">
-            <select class="form-control" name="category" id="category" required>
-                <option value="" {% if category_filter == '' %}selected{% endif %}>Category</option>
+            <select class="form-control" name="category" id="category">
+                <option value="">select category</option>
                 <option value="">No Category</option>
                 {% for category in categories %}
-                <option value="{{ category.id }}" {% if category_filter == category.id %}selected{% endif %}>{{ category.name }}</option>
+                <option value="{{ category.id }}">{{ category.name }}</option>
                 {% endfor %}
             </select>
         </div>
@@ -59,54 +59,55 @@
     </div>
 
 
-    <!-- Transaction list -->
+    
     {% if trx_all %}
-        
-    <div class="card"">
+    <!-- Calculated result for net balance, opening balance, total cash in, total cash out -->
+    <div class="card">
         <div class="card-body">
             <ul class="list-group">
                 <li class="list-group-item d-flex justify-content-between align-items-center">
                     Net Balance
                     <span class="badge badge-secondary badge-pill"><i class="fa-solid fa-bangladeshi-taka-sign"></i> {{ net_balance }}</span>
-                  </li>
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                  Opening Balance
-                  <span class="badge badge-primary badge-pill"><i class="fa-solid fa-bangladeshi-taka-sign"></i> {{acc_cash.initial_balance}}</span>
                 </li>
                 <li class="list-group-item d-flex justify-content-between align-items-center">
-                  Total Cash In
-                  <span class="badge badge-success badge-pill"><i class="fa-solid fa-bangladeshi-taka-sign"></i> {{ total_cash_in }}</span>
+                    Opening Balance
+                    <span class="badge badge-primary badge-pill"><i class="fa-solid fa-bangladeshi-taka-sign"></i> {{ opening_balance }}</span>
                 </li>
                 <li class="list-group-item d-flex justify-content-between align-items-center">
-                  Total Cash Out
-                  <span class="badge badge-danger badge-pill"><i class="fa-solid fa-bangladeshi-taka-sign"></i> {{ total_cash_out }}</span>
+                    Total Cash In
+                    <span class="badge badge-success badge-pill"><i class="fa-solid fa-bangladeshi-taka-sign"></i> {{ total_cash_in }}</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    Total Cash Out
+                    <span class="badge badge-danger badge-pill"><i class="fa-solid fa-bangladeshi-taka-sign"></i> {{ total_cash_out }}</span>
                 </li>
                 <li class="list-group-item text-center">
                     <a href="#" class="text-decoration-none">View Reports <i class="fa fa-arrow-right"></i> </a>
                 </li>
-              </ul>
+            </ul>
         </div>
     </div>
 
-        <div class="list-group">
-            {% for trx in trx_all %}
-            <a href="{% url 'cashbook:edit_transaction' trx.id %}" class="list-group-item list-group-item-action flex-column align-items-start">
-                <div class=" w-100">
-                    {% if trx.trx_type_id == type_cash_in %}
-                    <span class="badge badge-info mr-2">{{ trx.category_id.name }}</span>
-                    <span class="badge badge-secondary">Cash In</span>  
-                    <span class="text-success float-right"><b><i class="fa-solid fa-bangladeshi-taka-sign"></i> {{ trx.amount }}</b></span>
-                    {% else%}
-                    <span class="badge badge-info mr-2">{{ trx.category_id.name }}</span>
-                    <span class="badge badge-secondary">Cash Out</span>  
-                    <span class="text-danger float-right"><b><i class="fa-solid fa-bangladeshi-taka-sign"></i> {{ trx.amount }}</b></span>
-                    {% endif %}
-                </div>
-                <p class="mb-1">{{ trx.remarks }}</p>
-                <small class="text-muted">{{ trx.create_date }}</small>
-            </a>
-            {% endfor %}
-        </div>
+    <!-- Transaction list -->
+    <div class="list-group">
+        {% for trx in trx_all %}
+        <a href="{% url 'cashbook:edit_transaction' trx.id %}" class="list-group-item list-group-item-action flex-column align-items-start">
+            <div class=" w-100">
+                {% if trx.trx_type_id == type_cash_in %}
+                <span class="badge badge-info mr-2">{{ trx.category_id.name }}</span>
+                <span class="badge badge-secondary">Cash In</span>
+                <span class="text-success float-right"><b><i class="fa-solid fa-bangladeshi-taka-sign"></i> {{ trx.amount }}</b></span>
+                {% else %}
+                <span class="badge badge-info mr-2">{{ trx.category_id.name }}</span>
+                <span class="badge badge-secondary">Cash Out</span>
+                <span class="text-danger float-right"><b><i class="fa-solid fa-bangladeshi-taka-sign"></i> {{ trx.amount }}</b></span>
+                {% endif %}
+            </div>
+            <p class="mb-1">{{ trx.remarks }}</p>
+            <small class="text-muted">{{ trx.create_date }}</small>
+        </a>
+        {% endfor %}
+    </div>
     {% else %}
     <div class="card"">
         <div class="card-body">

@@ -6,71 +6,63 @@ from datetime import date, timedelta
 from cashbook.models import Category, Account, Transaction, TrxType
 from django.core.mail import send_mail
 from django.conf import settings
+import datetime
 
 def index(request):
-    
+    trx_all = Transaction.objects.order_by("-create_date")
     trx_types = TrxType.objects.all()
     categories = Category.objects.all()
 
-    # Retrieve filter values from request
-    date_filter = request.GET.get('date-filter', '')
-    trx_type_filter = request.GET.get('trx-type', '')
-    category_filter = request.GET.get('category', '')
-
-    # Filter transactions based on filter values
-    trx_all = Transaction.objects.order_by("-create_date")
-    if date_filter:
-        if date_filter == 'today':
-            trx_all = trx_all.filter(create_date__date=date.today())
-        elif date_filter == 'all-time':
-            trx_all = Transaction.objects.order_by("-create_date")
-        elif date_filter == 'yesterday':
-            trx_all = trx_all.filter(create_date__date=date.today() - timedelta(days=1))
-        elif date_filter == 'this_month':
-            trx_all = trx_all.filter(create_date__month=date.today().month)
-        elif date_filter == 'last_month':
-            trx_all = trx_all.filter(create_date__month=date.today().month - 1)
-        elif date_filter == 'single_day':
-            # You'll need to add logic to handle single-day filtering
-            pass
-        elif date_filter == 'date_range':
-            # You'll need to add logic to handle date range filtering
-            pass
-    else:
-        date_filter = 'this_month'
-        trx_all = trx_all.filter(create_date__month=date.today().month)
-
-    if trx_type_filter:
-        trx_all = trx_all.filter(trx_type_id=trx_type_filter)
-
-    if category_filter:
-        trx_all = trx_all.filter(category_id=category_filter)
-
-    # Calculate totals and net balance
     type_cash_in = TrxType.objects.get(name='cash_in')
     type_cash_out = TrxType.objects.get(name='cash_out')
 
-    total_cash_in = trx_all.filter(trx_type_id=type_cash_in).aggregate(Sum('amount'))['amount__sum'] or 0
-    total_cash_out = trx_all.filter(trx_type_id=type_cash_out).aggregate(Sum('amount'))['amount__sum'] or 0
+    # Retrieve filter values
+    date_filter = request.GET.get('date-filter')
+    trx_type_filter = request.GET.get('trx-type')
+    category_filter = request.GET.get('category')
 
-    acc_cash = Account.objects.get(name='cash')
-    net_balance = acc_cash.initial_balance + total_cash_in - total_cash_out
+    # Apply filters
+    if date_filter:
+        # Apply date filter based on the selected value
+        if date_filter == 'today':
+            trx_all = trx_all.filter(create_date__date=datetime.date.today())
+        elif date_filter == 'yesterday':
+            trx_all = trx_all.filter(create_date__date=datetime.date.today() - datetime.timedelta(days=1))
+        elif date_filter == 'this_month':
+            trx_all = trx_all.filter(create_date__month=datetime.date.today().month)
+        elif date_filter == 'last_month':
+            trx_all = trx_all.filter(create_date__month=datetime.date.today().month - 1)
+        elif date_filter == 'single_day':
+            # You need to implement the logic for filtering by a specific day
+            pass
+        elif date_filter == 'date_range':
+            # You need to implement the logic for filtering by a date range
+            pass
+
+    if trx_type_filter:
+        # Apply transaction type filter based on the selected value
+        trx_all = trx_all.filter(trx_type_id=trx_type_filter)
+
+    if category_filter:
+        # Apply category filter based on the selected value
+        trx_all = trx_all.filter(category_id=category_filter)
+
+    # Calculate net balance, opening balance, total cash in, and total cash out
+    net_balance = trx_all.aggregate(net_balance=Sum('amount'))['net_balance'] or 0
+    opening_balance = 0  # You need to implement the logic for calculating the opening balance
+    total_cash_in = trx_all.filter(trx_type_id=type_cash_in.id).aggregate(total_cash_in=Sum('amount'))['total_cash_in'] or 0
+    total_cash_out = trx_all.filter(trx_type_id=type_cash_out.id).aggregate(total_cash_out=Sum('amount'))['total_cash_out'] or 0
 
     context = {
         'trx_all': trx_all,
         'trx_types': trx_types,
         'categories': categories,
-        'net_balance': net_balance,
-        'acc_cash': acc_cash,
-        'total_cash_in': total_cash_in,
-        'total_cash_out': total_cash_out,
-
         'type_cash_in': type_cash_in,
         'type_cash_out': type_cash_out,
-        
-        'date_filter': date_filter,
-        'trx_type_filter': trx_type_filter,
-        'category_filter': category_filter,
+        'net_balance': net_balance,
+        'opening_balance': opening_balance,
+        'total_cash_in': total_cash_in,
+        'total_cash_out': total_cash_out,
     }
 
     return render(request, 'cashbook/index.html', context)
@@ -78,7 +70,6 @@ def index(request):
 # cash in transaction add
 def cash_in(request):
     categories = Category.objects.filter(is_active=True).order_by("name")
-    acc_cash      = Account.objects.get(name='cash')
     type_cash_in  = TrxType.objects.get(name='cash_in')
     transaction   = Transaction()
 
@@ -94,7 +85,7 @@ def cash_in(request):
         else:
             transaction.category_id = None
 
-        transaction.account_id = acc_cash
+        transaction.account_id = transaction.account_id = Account.objects.get(name='cash')
         transaction.trx_type_id = type_cash_in
         transaction.amount          = request.POST['amount']
         transaction.remarks         = request.POST['remarks']
@@ -108,7 +99,6 @@ def cash_in(request):
 # cash out transaction add
 def cash_out(request):
     categories = Category.objects.filter(is_active=True).order_by("name")
-    acc_cash      = Account.objects.get(name='cash')
     type_cash_out = TrxType.objects.get(name='cash_out')
     transaction   = Transaction()
 
@@ -124,7 +114,7 @@ def cash_out(request):
         else:
             transaction.category_id = None
         
-        transaction.account_id = acc_cash
+        transaction.account_id = Account.objects.get(name='cash')
         transaction.trx_type_id = type_cash_out
         
         transaction.amount          = request.POST['amount']
