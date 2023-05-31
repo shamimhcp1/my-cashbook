@@ -9,7 +9,7 @@ from django.conf import settings
 import datetime
 
 def index(request):
-    trx_all = Transaction.objects.order_by("-create_date")
+    
     trx_types = TrxType.objects.all()
     categories = Category.objects.all()
 
@@ -20,6 +20,13 @@ def index(request):
     date_filter = request.GET.get('date-filter')
     trx_type_filter = request.GET.get('trx-type')
     category_filter = request.GET.get('category')
+    
+    # Transaction by date
+    trx_all = Transaction.objects.order_by("-create_date")
+    trx_today = trx_all.filter(create_date__date=datetime.date.today())
+    trx_yesterday = trx_all.filter(create_date__date=datetime.date.today() - datetime.timedelta(days=1))
+    trx_this_month = trx_all.filter(create_date__month=datetime.date.today().month)
+    trx_last_month = trx_all.filter(create_date__month=datetime.date.today().month - 1)
 
     # Calculate net balance, opening balance, total cash in, and total cash out
     acc_cash = Account.objects.get(name='cash')
@@ -35,19 +42,15 @@ def index(request):
         
         if date_filter == 'today':
             # Filter transactions for today
-            trx_all = trx_all.filter(create_date__date=datetime.date.today())
-            # Calculate net balance, opening balance, total cash in, and total cash out
-            total_cash_in = trx_all.filter(trx_type_id=type_cash_in.id).aggregate(total_cash_in=Sum('amount'))['total_cash_in'] or 0
-            total_cash_out = trx_all.filter(trx_type_id=type_cash_out.id).aggregate(total_cash_out=Sum('amount'))['total_cash_out'] or 0
+            total_cash_in = trx_today.filter(trx_type_id=type_cash_in.id).aggregate(total_cash_in=Sum('amount'))['total_cash_in'] or 0
+            total_cash_out = trx_today.filter(trx_type_id=type_cash_out.id).aggregate(total_cash_out=Sum('amount'))['total_cash_out'] or 0
             prev_total_cash_in = trx_all.filter(trx_type_id=type_cash_in.id, create_date__lt=datetime.date.today()).aggregate(prev_total_cash_in=Sum('amount'))['prev_total_cash_in'] or 0
             prev_total_cash_out = trx_all.filter(trx_type_id=type_cash_out.id, create_date__lt=datetime.date.today()).aggregate(prev_total_cash_out=Sum('amount'))['prev_total_cash_out'] or 0
-            opening_balance = initial_balance + prev_total_cash_in - prev_total_cash_out
-            net_balance = opening_balance + total_cash_in - total_cash_out
+            opening_balance = (initial_balance + prev_total_cash_in - prev_total_cash_out) or 0
+            net_balance = (opening_balance + total_cash_in - total_cash_out) or 0
 
         elif date_filter == 'all-time':
             # Filter transactions for all-time
-            trx_all = Transaction.objects.order_by("-create_date")
-            # Calculate net balance, opening balance, closing_balance, total cash in, and total cash out
             total_cash_in = trx_all.filter(trx_type_id=type_cash_in.id).aggregate(total_cash_in=Sum('amount'))['total_cash_in'] or 0
             total_cash_out = trx_all.filter(trx_type_id=type_cash_out.id).aggregate(total_cash_out=Sum('amount'))['total_cash_out'] or 0
             opening_balance = initial_balance or 0
@@ -55,36 +58,31 @@ def index(request):
         
         elif date_filter == 'yesterday':
             # Filter transactions for yesterday
-            trx_all = trx_all.filter(create_date__date=datetime.date.today() - datetime.timedelta(days=1))
-            # Calculate net balance, opening balance, total cash in, and total cash out
-            total_cash_in = trx_all.filter(trx_type_id=type_cash_in.id).aggregate(total_cash_in=Sum('amount'))['total_cash_in'] or 0
-            total_cash_out = trx_all.filter(trx_type_id=type_cash_out.id).aggregate(total_cash_out=Sum('amount'))['total_cash_out'] or 0
+            total_cash_in = trx_yesterday.filter(trx_type_id=type_cash_in.id).aggregate(total_cash_in=Sum('amount'))['total_cash_in'] or 0
+            total_cash_out = trx_yesterday.filter(trx_type_id=type_cash_out.id).aggregate(total_cash_out=Sum('amount'))['total_cash_out'] or 0
             prev_total_cash_in = trx_all.filter(trx_type_id=type_cash_in.id, create_date__lt=datetime.date.today() - datetime.timedelta(days=1)).aggregate(prev_total_cash_in=Sum('amount'))['prev_total_cash_in'] or 0
             prev_total_cash_out = trx_all.filter(trx_type_id=type_cash_out.id, create_date__lt=datetime.date.today() - datetime.timedelta(days=1)).aggregate(prev_total_cash_out=Sum('amount'))['prev_total_cash_out'] or 0
-            opening_balance = initial_balance + prev_total_cash_in - prev_total_cash_out
-            net_balance = opening_balance + total_cash_in - total_cash_out
+            opening_balance = (initial_balance + prev_total_cash_in - prev_total_cash_out) or 0
+            net_balance = (opening_balance + total_cash_in - total_cash_out) or 0
 
         elif date_filter == 'this_month':
             # Filter transactions for the current month
-            trx_all = trx_all.filter(create_date__month=datetime.date.today().month)
-            # Calculate net balance, opening balance, total cash in, and total cash out
-            total_cash_in = trx_all.filter(trx_type_id=type_cash_in.id).aggregate(total_cash_in=Sum('amount'))['total_cash_in'] or 0
-            total_cash_out = trx_all.filter(trx_type_id=type_cash_out.id).aggregate(total_cash_out=Sum('amount'))['total_cash_out'] or 0
+            total_cash_in = trx_this_month.filter(trx_type_id=type_cash_in.id).aggregate(total_cash_in=Sum('amount'))['total_cash_in'] or 0
+            total_cash_out = trx_this_month.filter(trx_type_id=type_cash_out.id).aggregate(total_cash_out=Sum('amount'))['total_cash_out'] or 0
             prev_total_cash_in = trx_all.filter(trx_type_id=type_cash_in.id, create_date__lt=date.today().replace(day=1)).aggregate(prev_total_cash_in=Sum('amount'))['prev_total_cash_in'] or 0
             prev_total_cash_out = trx_all.filter(trx_type_id=type_cash_out.id, create_date__lt=date.today().replace(day=1)).aggregate(prev_total_cash_out=Sum('amount'))['prev_total_cash_out'] or 0
-            opening_balance = initial_balance + prev_total_cash_in - prev_total_cash_out
-            net_balance = opening_balance + total_cash_in - total_cash_out
+            opening_balance = (initial_balance + prev_total_cash_in - prev_total_cash_out) or 0
+            net_balance = (opening_balance + total_cash_in - total_cash_out) or 0
         
         elif date_filter == 'last_month':
             # Filter transactions for the previous month
-            trx_all = trx_all.filter(create_date__month=datetime.date.today().month - 1)
-            # Calculate net balance, opening balance, total cash in, and total cash out
-            total_cash_in = trx_all.filter(trx_type_id=type_cash_in.id).aggregate(total_cash_in=Sum('amount'))['total_cash_in'] or 0
-            total_cash_out = trx_all.filter(trx_type_id=type_cash_out.id).aggregate(total_cash_out=Sum('amount'))['total_cash_out'] or 0
-            prev_total_cash_in = trx_all.filter(trx_type_id=type_cash_in.id).aggregate(prev_total_cash_in=Sum('amount'))['prev_total_cash_in'] or 0
-            prev_total_cash_out = trx_all.filter(trx_type_id=type_cash_out.id).aggregate(prev_total_cash_out=Sum('amount'))['prev_total_cash_out'] or 0
-            opening_balance = initial_balance + prev_total_cash_in - prev_total_cash_out
-            net_balance = opening_balance + total_cash_in - total_cash_out
+            trx_last_month_of_last_month = trx_all.filter(create_date__month=datetime.date.today().month - 2)
+            total_cash_in = trx_last_month.filter(trx_type_id=type_cash_in.id).aggregate(total_cash_in=Sum('amount'))['total_cash_in'] or 0
+            total_cash_out = trx_last_month.filter(trx_type_id=type_cash_out.id).aggregate(total_cash_out=Sum('amount'))['total_cash_out'] or 0
+            prev_total_cash_in = trx_last_month_of_last_month.filter(trx_type_id=type_cash_in.id).aggregate(prev_total_cash_in=Sum('amount'))['prev_total_cash_in'] or 0
+            prev_total_cash_out = trx_last_month_of_last_month.filter(trx_type_id=type_cash_out.id).aggregate(prev_total_cash_out=Sum('amount'))['prev_total_cash_out'] or 0
+            opening_balance = (initial_balance + prev_total_cash_in - prev_total_cash_out) or 0
+            net_balance = (opening_balance + total_cash_in - total_cash_out) or 0
 
         elif date_filter == 'single_day':
             # You need to implement the logic for filtering by a specific day
@@ -95,14 +93,12 @@ def index(request):
     else:
         date_filter = 'this_month'
         # Filter transactions for the current month
-        trx_all = trx_all.filter(create_date__month=datetime.date.today().month)
-        # Calculate net balance, opening balance, total cash in, and total cash out
-        total_cash_in = trx_all.filter(trx_type_id=type_cash_in.id).aggregate(total_cash_in=Sum('amount'))['total_cash_in'] or 0
-        total_cash_out = trx_all.filter(trx_type_id=type_cash_out.id).aggregate(total_cash_out=Sum('amount'))['total_cash_out'] or 0
+        total_cash_in = trx_this_month.filter(trx_type_id=type_cash_in.id).aggregate(total_cash_in=Sum('amount'))['total_cash_in'] or 0
+        total_cash_out = trx_this_month.filter(trx_type_id=type_cash_out.id).aggregate(total_cash_out=Sum('amount'))['total_cash_out'] or 0
         prev_total_cash_in = trx_all.filter(trx_type_id=type_cash_in.id, create_date__lt=date.today().replace(day=1)).aggregate(prev_total_cash_in=Sum('amount'))['prev_total_cash_in'] or 0
         prev_total_cash_out = trx_all.filter(trx_type_id=type_cash_out.id, create_date__lt=date.today().replace(day=1)).aggregate(prev_total_cash_out=Sum('amount'))['prev_total_cash_out'] or 0
-        opening_balance = initial_balance + prev_total_cash_in - prev_total_cash_out
-        net_balance = opening_balance + total_cash_in - total_cash_out
+        opening_balance = (initial_balance + prev_total_cash_in - prev_total_cash_out) or 0
+        net_balance = (opening_balance + total_cash_in - total_cash_out) or 0
         
     if trx_type_filter:
         # Apply transaction type filter based on the selected value

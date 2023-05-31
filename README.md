@@ -16,8 +16,9 @@
 * if is_active it will show for add cash in / cash out
 * if not is_active it will still show in transaction but will not show for new transaction
 
+3. date filter functions are working.
+
 **Need corrections:**
-* opening balance will be either book initial balance or last month end net balance.
 * date-filter is not responding with trx_type and category filter.
 * if choosen category filter trx_type filter data removes.
 * about page col-md-auto div larger size fix to responsive.
