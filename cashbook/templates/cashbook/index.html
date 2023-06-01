@@ -88,9 +88,9 @@
     </div>
 
     <!-- Transaction list -->
-    {% if trx_all %}
+    {% if transactions %}
     <div class="list-group">
-        {% for trx in trx_all %}
+        {% for trx in transactions %}
         <a href="{% url 'cashbook:edit_transaction' trx.id %}" class="list-group-item list-group-item-action flex-column align-items-start">
             <div class=" w-100">
                 {% if trx.trx_type_id == type_cash_in %}
