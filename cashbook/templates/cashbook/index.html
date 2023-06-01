@@ -16,7 +16,8 @@
     <div class="row justify-content-md-center">
         <div class="col-4">
             <select class="form-control" name="date-filter" id="date-filter" required>
-                <option value="all-time" {% if date_filter == '' %}selected{% endif %}>All Time</option>
+                <option value="" {% if date_filter == '' %}selected{% endif %}>Select Date</option>
+                <option value="all-time" {% if date_filter == 'all-time' %}selected{% endif %}>All Time</option>
                 <option value="today" {% if date_filter == 'today' %}selected{% endif %}>Today</option>
                 <option value="yesterday" {% if date_filter == 'yesterday' %}selected{% endif %}>Yesterday</option>
                 <option value="this_month" {% if date_filter == 'this_month' %}selected{% endif %}>This Month</option>
@@ -27,7 +28,7 @@
         </div>
         <div class="col-4">
             <select class="form-control" name="trx-type" id="trx-type" required>
-                <option value="" {% if trx_type_filter == '' %}selected{% endif %}>Trx Type</option>
+                <option value="">Trx Type</option>
                 {% for type in trx_types %}
                 <option value="{{ type.id }}" {% if trx_type_filter == type.id %}selected{% endif %}>{{ type.name }}</option>
                 {% endfor %}
@@ -35,7 +36,7 @@
         </div>
         <div class="col-4">
             <select class="form-control" name="category" id="category" required>
-                <option value="" {% if category_filter == '' %}selected{% endif %}>Category</option>
+                <option value="">Category</option>
                 <option value="">No Category</option>
                 {% for category in categories %}
                 <option value="{{ category.id }}" {% if category_filter == category.id %}selected{% endif %}>{{ category.name }}</option>

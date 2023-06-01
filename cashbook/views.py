@@ -102,11 +102,11 @@ def index(request):
         transactions = trx_this_month
     if trx_type_filter:
         # Apply transaction type filter based on the selected value
-        trx_all = trx_all.filter(trx_type_id=trx_type_filter)
+        transactions = trx_all.filter(trx_type_id=trx_type_filter)
 
     if category_filter:
         # Apply category filter based on the selected value
-        trx_all = trx_all.filter(category_id=category_filter)
+        transactions = trx_all.filter(category_id=category_filter)
 
     
     context = {
