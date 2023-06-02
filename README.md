@@ -25,6 +25,7 @@
 * about page col-md-auto div larger size fix to responsive.
 * transaction edit option for is_active=False category.
 * need to fix back button link.
+* filter option
 
 **Need to code:**
 1. Fund transfer
