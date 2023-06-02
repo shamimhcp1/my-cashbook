@@ -7,9 +7,20 @@ from cashbook.models import Category, Account, Transaction, TrxType
 from django.core.mail import send_mail
 from django.conf import settings
 import datetime
+from dateutil import parser
 
 def index(request):
     
+    transactions = Transaction.objects.all()
+    accounts = Account.objects.order_by("name")
+
+    context = {
+        'accounts'      : accounts,
+        'transactions'  : transactions
+    }
+    return render(request, 'cashbook/accounts.html', context)
+
+def accounts_view(request, acc_name):
     trx_types = TrxType.objects.all()
     categories = Category.objects.all()
 
@@ -127,17 +138,22 @@ def index(request):
 
     return render(request, 'cashbook/index.html', context)
 
+    
 # cash in transaction add
 def cash_in(request):
     categories = Category.objects.filter(is_active=True).order_by("name")
     type_cash_in  = TrxType.objects.get(name='cash_in')
-    transaction   = Transaction()
+    type_cash_out = TrxType.objects.get(name='cash_out')
+    
+    acc_cash = Account.objects.get(name='cash')
+    trx_all = Transaction.objects.order_by("-create_date")
 
     context = {
         'categories'    : categories
     }
 
     if request.method == 'POST':
+        transaction   = Transaction()
         if request.POST['category'] != 'null':
             category_id = request.POST['category']
             category = get_object_or_404(Category, pk=category_id)
@@ -152,6 +168,21 @@ def cash_in(request):
         transaction.create_date     = request.POST['create_date']
         transaction.save()
 
+        # calculate net_balance
+        total_cash_in = trx_all.filter(trx_type_id=type_cash_in.id).aggregate(total_cash_in=Sum('amount'))['total_cash_in'] or 0
+        total_cash_out = trx_all.filter(trx_type_id=type_cash_out.id).aggregate(total_cash_out=Sum('amount'))['total_cash_out'] or 0
+        net_balance = (acc_cash.initial_balance + total_cash_in - total_cash_out) or 0
+
+        # save net balance and last updated transaction in account
+        acc_cash.net_balance = net_balance
+
+        # Extract the date portion from the datetime object
+        last_updated = datetime.date.today()
+
+        # Save the last_updated date to the account
+        acc_cash.last_updated = last_updated
+        acc_cash.save()
+        
         return redirect('cashbook:index')
     else:
         return render(request, 'cashbook/cash_in.html', context)
@@ -159,14 +190,18 @@ def cash_in(request):
 # cash out transaction add
 def cash_out(request):
     categories = Category.objects.filter(is_active=True).order_by("name")
+    type_cash_in  = TrxType.objects.get(name='cash_in')
     type_cash_out = TrxType.objects.get(name='cash_out')
-    transaction   = Transaction()
+    
+    acc_cash = Account.objects.get(name='cash')
+    trx_all = Transaction.objects.order_by("-create_date")
 
     context = {
         'categories'    : categories
     }
 
     if request.method == 'POST':
+        transaction   = Transaction()
         if request.POST['category'] != 'null':
             category_id = request.POST['category']
             category = get_object_or_404(Category, pk=category_id)
@@ -181,6 +216,21 @@ def cash_out(request):
         transaction.remarks         = request.POST['remarks']
         transaction.create_date     = request.POST['create_date']
         transaction.save()
+
+        # calculate net_balance
+        total_cash_in = trx_all.filter(trx_type_id=type_cash_in.id).aggregate(total_cash_in=Sum('amount'))['total_cash_in'] or 0
+        total_cash_out = trx_all.filter(trx_type_id=type_cash_out.id).aggregate(total_cash_out=Sum('amount'))['total_cash_out'] or 0
+        net_balance = (acc_cash.initial_balance + total_cash_in - total_cash_out) or 0
+
+        # save net balance and last updated transaction in account
+        acc_cash.net_balance = net_balance
+
+        # Extract the date portion from the datetime object
+        last_updated = datetime.date.today()
+
+        # Save the last_updated date to the account
+        acc_cash.last_updated = last_updated
+        acc_cash.save()
 
         return redirect('cashbook:index')
     else:
@@ -198,7 +248,9 @@ def edit_transaction(request, transaction_id):
 
     if request.method == 'POST':
         acc_cash      = Account.objects.get(name='cash')
-        transaction.account_id = acc_cash
+        type_cash_in  = TrxType.objects.get(name='cash_in')
+        type_cash_out = TrxType.objects.get(name='cash_out')
+        trx_all = Transaction.objects.order_by("-create_date")
 
         if request.POST['category'] != 'null':
             category_id = request.POST['category']
@@ -209,12 +261,27 @@ def edit_transaction(request, transaction_id):
         
         trx_id = request.POST['trx_type']
         trx_type = get_object_or_404(TrxType, pk=trx_id)
+        transaction.account_id = acc_cash
         transaction.trx_type_id = trx_type
-        
         transaction.amount          = request.POST['amount']
         transaction.remarks         = request.POST['remarks']
         transaction.create_date     = request.POST['create_date']
         transaction.save()
+
+        # calculate net_balance
+        total_cash_in = trx_all.filter(trx_type_id=type_cash_in.id).aggregate(total_cash_in=Sum('amount'))['total_cash_in'] or 0
+        total_cash_out = trx_all.filter(trx_type_id=type_cash_out.id).aggregate(total_cash_out=Sum('amount'))['total_cash_out'] or 0
+        net_balance = (acc_cash.initial_balance + total_cash_in - total_cash_out) or 0
+
+        # save net balance and last updated transaction in account
+        acc_cash.net_balance = net_balance
+
+        # Extract the date portion from the datetime object
+        last_updated = datetime.date.today()
+
+        # Save the last_updated date to the account
+        acc_cash.last_updated = last_updated
+        acc_cash.save()
 
         return redirect('cashbook:index')  # Replace with the appropriate URL name for the transaction list
     else:
@@ -238,6 +305,26 @@ def delete_transaction(request):
         transaction_id = request.POST.get('transaction_id')
         transaction = get_object_or_404(Transaction, pk=transaction_id)
         transaction.delete()
+
+    acc_cash      = Account.objects.get(name='cash')
+    type_cash_in  = TrxType.objects.get(name='cash_in')
+    type_cash_out = TrxType.objects.get(name='cash_out')
+    trx_all = Transaction.objects.order_by("-create_date")
+    
+    # calculate net_balance
+    total_cash_in = trx_all.filter(trx_type_id=type_cash_in.id).aggregate(total_cash_in=Sum('amount'))['total_cash_in'] or 0
+    total_cash_out = trx_all.filter(trx_type_id=type_cash_out.id).aggregate(total_cash_out=Sum('amount'))['total_cash_out'] or 0
+    net_balance = (acc_cash.initial_balance + total_cash_in - total_cash_out) or 0
+
+    # save net balance and last updated transaction in account
+    acc_cash.net_balance = net_balance
+
+    # Extract the date portion from the datetime object
+    last_updated = datetime.date.today()
+
+    # Save the last_updated date to the account
+    acc_cash.last_updated = last_updated
+    acc_cash.save()
     
     return redirect('cashbook:index')
 
@@ -306,3 +393,4 @@ def delete_category(request):
         category = get_object_or_404(Category, pk=request.POST['category_id'])
         category.delete()
     return redirect('cashbook:manage_category')
+

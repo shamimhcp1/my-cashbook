@@ -1,4 +1,5 @@
 from django.db import models
+import datetime
 
 class Category(models.Model):
     name = models.CharField(max_length=20)
@@ -10,6 +11,8 @@ class Category(models.Model):
 class Account(models.Model):
     name            = models.CharField(max_length=20)
     initial_balance = models.FloatField(default=0)
+    net_balance  = models.FloatField(default=0)
+    last_updated = models.DateField(default=datetime.date.today)
 
     def __str__(self):
         return self.name

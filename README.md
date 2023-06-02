@@ -17,12 +17,14 @@
 * if not is_active it will still show in transaction but will not show for new transaction
 
 3. date filter functions are working.
+4. accounts page created as homepage
 
 **Need corrections:**
 * date-filter is not responding with trx_type and category filter.
 * if choosen category filter trx_type filter data removes.
 * about page col-md-auto div larger size fix to responsive.
 * transaction edit option for is_active=False category.
+* need to fix back button link.
 
 **Need to code:**
 1. Fund transfer

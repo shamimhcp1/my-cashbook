@@ -1,0 +1,35 @@
+{% extends "cashbook/base.html" %}
+
+{% block content %}
+
+    <p class="p-3">Your Accounts</p>
+
+    <!-- Accounts list -->
+    {% if accounts %}
+    <div class="list-group" style="margin-top: -20px; min-height: 500px;">
+        {% for acc in accounts %}
+        <a href="{% url 'cashbook:accounts_view' acc.name %}" class="list-group-item list-group-item-action flex-column align-items-start">
+            <div class=" w-100">
+                <p class="mb-1 text-uppercase"><strong>{{ acc.name }}</strong></p>
+                <!-- Show all-time transaction net_balance with this account below-->
+                <span class="text-success float-right"><b><i class="fa-solid fa-bangladeshi-taka-sign"></i> {{ acc.net_balance }} </b></span>
+            </div>
+            <!-- Show last updated date transaction with thi saccount as human readable  format below-->
+            <small class="text-muted">Updated on {{ acc.last_updated|date:"F d, Y" }} </small>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="card"">
+        <div class="card-body">
+            <ul class="list-group">
+                <span>No Accounts are available.</span>
+            </ul>
+        </div>
+    </div>
+        
+    {% endif %}
+
+
+
+{% endblock %}
